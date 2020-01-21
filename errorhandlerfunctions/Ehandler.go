@@ -10,7 +10,7 @@ import (
 func init() {
 	Logfile, err := os.OpenFile("logs/log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		fmt.Printf("error opening file %v", err)
+		fmt.Printf("error opening file %v \n", err)
 		panic(err)
 	}
 	log.SetOutput(Logfile)
