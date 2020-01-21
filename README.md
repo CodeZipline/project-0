@@ -7,7 +7,7 @@ Use go get https://github.com/dgraph-io/badger, and go get https://github.com/Da
     The first package will be the main database methods that this program will use, and second is used for compression of files into different levels of storage within a Log Structured Merge Tree.  
 
 ## Configurations
-The configuration files will contain the path to the directory in which the keys log and value log will be stored to, in addition to the changes logs made to the database and the key registry
+The configuration files will contain the path to the directory in which the keys log and value log will be stored to, in addition to the changes logs made to the database and the key registry.
 
 ## Garbage Collection Notes
 1. Due to values being stored seperately in the value logs from keys, values are not effected when keys are removed
