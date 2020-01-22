@@ -1,0 +1,9 @@
+{
+    "Coding Answer" : "Found on stackoverflow.com"
+    "Life Answer" : "42"
+    "Answer To Any Problem" : "Our Lord and Savior Jesus Christ"
+    "9 + 10" : "21"
+    "What Ended In 1986?" : "1985"
+    "Is This The Krusty Krab?" : "NO, This is Patrick!"
+    "End All Be All Coding Language" : " "Go"
+}
