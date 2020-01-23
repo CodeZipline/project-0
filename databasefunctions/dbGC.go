@@ -7,8 +7,8 @@ import (
 	"github.com/dgraph-io/badger"
 )
 
-// dbGCContinous will run for a [dur] amount of minutes with garbage collection running in intervals of [inter] minutes
-func dbGCContinous(db *badger.DB, inter int, dur int, dRS float64) {
+// DbGCContinous will run for a [dur] amount of minutes with garbage collection running in intervals of [inter] minutes
+func DbGCContinous(db *badger.DB, inter int, dur int, dRS float64) {
 
 	ticker := time.NewTicker(time.Duration(inter) * time.Second)
 	defer ticker.Stop()

@@ -59,7 +59,7 @@ func DbMenu(db *badger.DB) {
 		k, v := stdInRead("writeMode")
 		fmt.Println(DbWriteTTL(db, k, v, c.TTL))
 	case "gc":
-		dbGCContinous(db, c.GCINTERVAL, c.GCDURATION, c.GCDRS)
+		DbGCContinous(db, c.GCINTERVAL, c.GCDURATION, c.GCDRS)
 	case "d":
 		k, _ := stdInRead("deleteMode")
 		fmt.Println(DbDelete(db, k))
