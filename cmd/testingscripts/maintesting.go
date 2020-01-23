@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"math/rand"
+	"os"
+	"time"
+
 	"github.com/CodeZipline/project-0/configurations"
 	"github.com/CodeZipline/project-0/databasefunctions"
 	"github.com/CodeZipline/project-0/errorhandlerfunctions"
 	"github.com/dgraph-io/badger"
-	"sync"
-	"time"
 )
 
 // Equal tells whether a and b contain the same elements.
@@ -98,82 +101,73 @@ func testDbDelete(db *badger.DB) {
 
 }
 
-type readOp struct {
-    key  string
-    resp chan string
-}
-type writeOp struct {
-    key  string
-    val  string
-    resp chan bool
+type kvPairs struct {
+	key string
+	val string
 }
 
 func main() {
+
+	Logfile, err := os.OpenFile("logs/log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Printf("error opening file %v \n", err)
+		panic(err)
+	}
+	log.SetOutput(Logfile)
+
+	Answers := []string{
+		"Coding Answer : Found on stackoverflow.com",
+		"Life Answer : 42",
+		"Answer To Any Problem : Our Lord and Savior Jesus Christ",
+		"9 + 10 : 21",
+		"What Ended In 1986? : 1985",
+		"Is This The Krusty Krab? : NO, This is Patrick!",
+		"End All Be All Coding Language : Go",
+	}
+
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	db, err := databasefunctions.OpenDatabase(configurations.DbArchitecture.DD)
 	errorhandlerfunctions.Ehandler(err)
 	defer db.Close()
 
+
+	kvMessagesChan := make(chan kvPairs)
+
+	go func() {
+		for {
+			select {
+			case resp := <- kvMessagesChan:
+				log.Printf("Reader finished. The key: %s, The Value: \n", resp.key, databasefunctions.DbRead(db, resp.key))
+			}
+		}
+	}()
+	
+
+	for w := 0; w < 3; w++ {
+		go func() {
+			for {
+				write := kvPairs{
+					key: Answers[rand.Intn(len(Answers))],
+					val: "success"}
+				dbKey, dbValue := databasefunctions.DbWrite(db, write.key, write.val)
+				log.Printf("Writer finished. Key: %s, Value: %s.\n",dbKey, dbValue)
+				kvMessagesChan <- write
+
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	}
+
+	time.Sleep(time.Second)
+
 	// Test functions to check for proper execution of basic functions
-	testDbWrite(db)
 	testDbWrite(db)
 	testDbRead(db)
 	testDbFullReadOnKeys(db)
+	fmt.Println("Checking delete function:")
 	testDbDelete(db)
 
-
-    var readOpCounter uint64
-    var writeOpCounter uint64
-
-    reads := make(chan readOp)
-    writes := make(chan writeOp)
-
-    go func() {
-        for {
-            select {
-            case read := <-reads:
-                read.resp <- databasefunctions.DbRead(db, read.key)
-            case write := <-writes:
-                databasefunctions.DbWrite(db, write.key, write.val)
-                write.resp <- true
-            }
-        }
-    }()
-
-    for r := 0; r < 100; r++ {
-        go func() {
-            for {
-                read := readOp{
-                    key:  rand.Intn(5),
-                    resp: make(chan int)}
-                reads <- read
-                <-read.resp
-                atomic.AddUint64(&readOps, 1)
-                time.Sleep(time.Millisecond)
-            }
-        }()
-    }
-
-    for w := 0; w < 10; w++ {
-        go func() {
-            for {
-                write := writeOp{
-                    key:  rand.Intn(5),
-                    val:  rand.Intn(100),
-                    resp: make(chan bool)}
-                writes <- write
-                <-write.resp
-                atomic.AddUint64(&writeOps, 1)
-                time.Sleep(time.Millisecond)
-            }
-        }()
-    }
-
-    time.Sleep(time.Second)
-
-    readOpsFinal := atomic.LoadUint64(&readOps)
-    fmt.Println("readOps:", readOpsFinal)
-    writeOpsFinal := atomic.LoadUint64(&writeOps)
-    fmt.Println("writeOps:", writeOpsFinal)
-}
+	os.Exit(0)
 
 }
