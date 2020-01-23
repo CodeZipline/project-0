@@ -108,6 +108,7 @@ type kvPairs struct {
 
 func main() {
 
+	// Designate its own log file directory and file inside
 	Logfile, err := os.OpenFile("logs/log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Printf("error opening file %v \n", err)
@@ -115,6 +116,7 @@ func main() {
 	}
 	log.SetOutput(Logfile)
 
+	// Test strings to be used for writes to the database
 	Answers := []string{
 		"Coding Answer : Found on stackoverflow.com",
 		"Life Answer : 42",
@@ -125,31 +127,39 @@ func main() {
 		"End All Be All Coding Language : Go",
 	}
 
+	// Properly seed the random functions to have different results each time
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	// Open and Defer closing the datbase for function usage
 	db, err := databasefunctions.OpenDatabase(configurations.DbArchitecture.DD)
 	errorhandlerfunctions.Ehandler(err)
 	defer db.Close()
 
+	// Chanel to recieve kvpair instances as messages and to send out kvpair instances
 	kvMessagesChan := make(chan kvPairs)
 
 	go func() {
 		for {
 			select {
+			// Occurs when a message is recieved to the chanel and resp captures the object for later logging
 			case resp := <-kvMessagesChan:
 				log.Printf("Reader finished. The key: %s, The Value: %s. \n", resp.key, databasefunctions.DbRead(db, resp.key))
 			}
 		}
 	}()
 
+	// Create three go rotutines to act as writes to the database
 	for w := 0; w < 3; w++ {
 		go func() {
 			for {
+				// Randomly pick from answer set and apply the value of success to each of them 
+				//  forming a key value pair stored in this write struct
 				write := kvPairs{
 					key: Answers[rand.Intn(len(Answers))],
 					val: "success"}
 				dbKey, dbValue := databasefunctions.DbWrite(db, write.key, write.val)
 				log.Printf("Writer finished. Key: %s, Value: %s.\n", dbKey, dbValue)
+				// sends the struct to the chanel to be processed by the "readers" of the database
 				kvMessagesChan <- write
 
 				time.Sleep(time.Millisecond)
