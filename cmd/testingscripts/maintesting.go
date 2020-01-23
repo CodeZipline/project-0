@@ -131,18 +131,16 @@ func main() {
 	errorhandlerfunctions.Ehandler(err)
 	defer db.Close()
 
-
 	kvMessagesChan := make(chan kvPairs)
 
 	go func() {
 		for {
 			select {
-			case resp := <- kvMessagesChan:
-				log.Printf("Reader finished. The key: %s, The Value: \n", resp.key, databasefunctions.DbRead(db, resp.key))
+			case resp := <-kvMessagesChan:
+				log.Printf("Reader finished. The key: %s, The Value: %s. \n", resp.key, databasefunctions.DbRead(db, resp.key))
 			}
 		}
 	}()
-	
 
 	for w := 0; w < 3; w++ {
 		go func() {
@@ -151,7 +149,7 @@ func main() {
 					key: Answers[rand.Intn(len(Answers))],
 					val: "success"}
 				dbKey, dbValue := databasefunctions.DbWrite(db, write.key, write.val)
-				log.Printf("Writer finished. Key: %s, Value: %s.\n",dbKey, dbValue)
+				log.Printf("Writer finished. Key: %s, Value: %s.\n", dbKey, dbValue)
 				kvMessagesChan <- write
 
 				time.Sleep(time.Millisecond)
